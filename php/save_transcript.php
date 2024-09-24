@@ -40,7 +40,7 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => [
                 'file' => new CURLFILE($chunk_file),
-                'model' => 'whisper-2'
+                'model' => 'whisper-1'
             ],
             CURLOPT_HTTPHEADER => [
                 "Authorization: Bearer {$openai_api_key}"

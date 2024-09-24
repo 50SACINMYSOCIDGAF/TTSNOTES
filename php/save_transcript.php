@@ -7,6 +7,7 @@ $openai_api_key = 'sk-proj-E4lNwaUblPg0AUYE52N7tPHgYGTcHIBl2cgu2KAaO9zPKOBsEeLiw
 // Handle file upload
 if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chunkNumber'])) {
     $audio_file = $_FILES['audio']['tmp_name'];
+    $audio_file_name = $_FILES['audio']['name'];
     $lecture_name = $_POST['lectureName'];
     $chunk_number = $_POST['chunkNumber'];
 
@@ -29,6 +30,13 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
     if (move_uploaded_file($audio_file, $chunk_file)) {
         // Transcribe audio using OpenAI Whisper API
         $curl = curl_init();
+        $curlFile = new CURLFile($chunk_file, 'audio/mp3', $audio_file_name);
+
+        $postFields = [
+            'file' => $curlFile,
+            'model' => 'whisper-1'
+        ];
+
         curl_setopt_array($curl, [
             CURLOPT_URL => "https://api.openai.com/v1/audio/transcriptions",
             CURLOPT_RETURNTRANSFER => true,
@@ -38,21 +46,25 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => [
-                'file' => new CURLFILE($chunk_file),
-                'model' => 'whisper-1'
-            ],
+            CURLOPT_POSTFIELDS => $postFields,
             CURLOPT_HTTPHEADER => [
-                "Authorization: Bearer {$openai_api_key}"
+                "Authorization: Bearer {$openai_api_key}",
+                "Content-Type: multipart/form-data"
             ],
         ]);
 
         $response = curl_exec($curl);
         $err = curl_error($curl);
+        $info = curl_getinfo($curl);
         curl_close($curl);
 
         if ($err) {
             echo json_encode(['success' => false, 'message' => 'Curl error: ' . $err]);
+            exit;
+        }
+
+        if ($info['http_code'] != 200) {
+            echo json_encode(['success' => false, 'message' => 'API error: ' . $response]);
             exit;
         }
 

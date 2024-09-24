@@ -4,7 +4,6 @@ let mediaRecorder;
 let audioChunks = [];
 let recordingInterval;
 const CHUNK_DURATION = 60000; // 1 minute in milliseconds
-const MAX_CHUNKS = 5; // Keep last 5 minutes
 let chunkCounter = 0;
 
 document.getElementById('startRecording').addEventListener('click', startRecording);
@@ -34,11 +33,7 @@ async function startRecording() {
             const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
             saveAndTranscribeAudio(audioBlob, chunkCounter);
             audioChunks = [];
-
             chunkCounter++;
-            if (chunkCounter > MAX_CHUNKS) {
-                deleteOldestChunk(chunkCounter - MAX_CHUNKS);
-            }
         };
 
         mediaRecorder.start();
@@ -56,16 +51,21 @@ async function startRecording() {
     }
 }
 
-function stopRecording() {
+async function stopRecording() {
     isRecording = false;
     clearInterval(recordingInterval);
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('stopRecording').disabled = true;
+    document.getElementById('status').textContent = 'Recording stopped. Processing final chunk...';
+
     if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
     }
-    document.getElementById('startRecording').disabled = false;
-    document.getElementById('stopRecording').disabled = true;
-    document.getElementById('status').textContent = 'Recording stopped. Summarizing...';
 
+    // Wait for the final chunk to be processed
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Now summarize
     summarizeTranscript();
 }
 
@@ -85,33 +85,16 @@ async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
         if (!result.success) {
             throw new Error(result.message || 'Transcription failed');
         }
+        document.getElementById('status').textContent = `Chunk ${chunkNumber} processed successfully`;
     } catch (error) {
         console.error('Error saving and transcribing audio:', error);
-        document.getElementById('status').textContent = 'Error transcribing audio';
-    }
-}
-
-async function deleteOldestChunk(chunkNumber) {
-    const lectureName = document.getElementById('lectureName').value;
-    try {
-        const response = await fetch('php/delete_chunk.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ lectureName: lectureName, chunkNumber: chunkNumber })
-        });
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.message || 'Failed to delete oldest chunk');
-        }
-    } catch (error) {
-        console.error('Error deleting oldest chunk:', error);
+        document.getElementById('status').textContent = `Error processing chunk ${chunkNumber}`;
     }
 }
 
 async function summarizeTranscript() {
     const lectureName = document.getElementById('lectureName').value;
+    document.getElementById('status').textContent = 'Generating summary...';
     try {
         const response = await fetch('php/summarize.php', {
             method: 'POST',
@@ -123,34 +106,12 @@ async function summarizeTranscript() {
         const result = await response.json();
         if (result.success) {
             document.getElementById('summary').textContent = result.summary;
-            document.getElementById('status').textContent = 'Summary generated and saved';
-
-            // Save the summary
-            await saveSummary(lectureName, result.summary);
+            document.getElementById('status').textContent = 'Summary generated';
         } else {
             throw new Error(result.error || 'Failed to summarize transcript');
         }
     } catch (error) {
         console.error('Error summarizing transcript:', error);
         document.getElementById('status').textContent = 'Error generating summary';
-    }
-}
-
-async function saveSummary(lectureName, summary) {
-    try {
-        const response = await fetch('php/save_summary.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ lectureName: lectureName, summary: summary })
-        });
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.message || 'Failed to save summary');
-        }
-    } catch (error) {
-        console.error('Error saving summary:', error);
-        document.getElementById('status').textContent += ' (Error saving summary file)';
     }
 }

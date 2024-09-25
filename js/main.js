@@ -22,6 +22,8 @@ async function startRecording() {
 
     isRecording = true;
     isPaused = false;
+    chunkCounter = 0;
+    audioChunks = [];
     document.getElementById('startRecording').disabled = true;
     document.getElementById('stopRecording').disabled = false;
     document.getElementById('pauseRecording').disabled = false;
@@ -30,17 +32,24 @@ async function startRecording() {
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
         mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
         };
 
-        mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-            saveAndTranscribeAudio(audioBlob, chunkCounter);
-            audioChunks = [];
-            chunkCounter++;
+        mediaRecorder.onstop = async () => {
+            if (audioChunks.length > 0) {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                await saveAndTranscribeAudio(audioBlob, chunkCounter);
+                audioChunks = [];
+                chunkCounter++;
+            }
+            if (isRecording && !isPaused) {
+                startNewChunk();
+            }
         };
 
         startNewChunk();
@@ -57,7 +66,6 @@ function startNewChunk() {
         recordingInterval = setTimeout(() => {
             if (mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
-                startNewChunk();
             }
         }, CHUNK_DURATION);
     }
@@ -79,7 +87,6 @@ function togglePause() {
         document.getElementById('status').textContent = 'Paused';
     } else {
         resumeTime = Date.now();
-        const pauseDuration = resumeTime - pauseTime;
         startNewChunk();
         pauseButton.textContent = 'Pause';
         document.getElementById('status').textContent = 'Recording...';
@@ -108,7 +115,7 @@ async function stopRecording() {
 
 async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
     const formData = new FormData();
-    formData.append('audio', audioBlob, `recording_${chunkNumber}.mp3`);
+    formData.append('audio', audioBlob, `recording_${chunkNumber}.webm`);
     formData.append('lectureName', document.getElementById('lectureName').value);
     formData.append('chunkNumber', chunkNumber);
 

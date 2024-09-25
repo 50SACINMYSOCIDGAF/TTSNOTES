@@ -1,13 +1,17 @@
 // js/main.js
 let isRecording = false;
+let isPaused = false;
 let mediaRecorder;
 let audioChunks = [];
 let recordingInterval;
 const CHUNK_DURATION = 60000; // 1 minute in milliseconds
 let chunkCounter = 0;
+let pauseTime = 0;
+let resumeTime = 0;
 
 document.getElementById('startRecording').addEventListener('click', startRecording);
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
+document.getElementById('pauseRecording').addEventListener('click', togglePause);
 
 async function startRecording() {
     const lectureName = document.getElementById('lectureName').value;
@@ -17,8 +21,11 @@ async function startRecording() {
     }
 
     isRecording = true;
+    isPaused = false;
     document.getElementById('startRecording').disabled = true;
     document.getElementById('stopRecording').disabled = false;
+    document.getElementById('pauseRecording').disabled = false;
+    document.getElementById('pauseRecording').textContent = 'Pause';
     document.getElementById('status').textContent = 'Recording...';
 
     try {
@@ -36,14 +43,7 @@ async function startRecording() {
             chunkCounter++;
         };
 
-        mediaRecorder.start();
-
-        recordingInterval = setInterval(() => {
-            if (mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                mediaRecorder.start();
-            }
-        }, CHUNK_DURATION);
+        startNewChunk();
 
     } catch (error) {
         console.error('Error starting recording:', error);
@@ -51,11 +51,48 @@ async function startRecording() {
     }
 }
 
+function startNewChunk() {
+    if (mediaRecorder && mediaRecorder.state === 'inactive' && isRecording && !isPaused) {
+        mediaRecorder.start();
+        recordingInterval = setTimeout(() => {
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                startNewChunk();
+            }
+        }, CHUNK_DURATION);
+    }
+}
+
+function togglePause() {
+    if (!isRecording) return;
+
+    isPaused = !isPaused;
+    const pauseButton = document.getElementById('pauseRecording');
+
+    if (isPaused) {
+        pauseTime = Date.now();
+        clearTimeout(recordingInterval);
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        pauseButton.textContent = 'Resume';
+        document.getElementById('status').textContent = 'Paused';
+    } else {
+        resumeTime = Date.now();
+        const pauseDuration = resumeTime - pauseTime;
+        startNewChunk();
+        pauseButton.textContent = 'Pause';
+        document.getElementById('status').textContent = 'Recording...';
+    }
+}
+
 async function stopRecording() {
     isRecording = false;
-    clearInterval(recordingInterval);
+    isPaused = false;
+    clearTimeout(recordingInterval);
     document.getElementById('startRecording').disabled = false;
     document.getElementById('stopRecording').disabled = true;
+    document.getElementById('pauseRecording').disabled = true;
     document.getElementById('status').textContent = 'Recording stopped. Processing final chunk...';
 
     if (mediaRecorder && mediaRecorder.state === 'recording') {

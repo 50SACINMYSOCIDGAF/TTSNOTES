@@ -52,6 +52,7 @@ curl_setopt_array($curl, [
                                                Web Development
 
                                                Format the notes for easy readability and quick reference. Use Markdown formatting where appropriate.
+                                               some information may be wrong/incorrect due to the nature of how the transcription is generated, use common sense and think through step by step when outputting so that even if something is incorrectly spelled in the transcript you output it properly. all transcripts passed will be related to cybersecurity or computer science. use your knowledge on the subject accordingly to ensure that information is as accurate as possible
                                                Begin your response with: "Lecture Notes: [Main Topic]"
                                                Now, please summarize the provided transcript into well-structured, comprehensive notes following these guidelines.'],
             ['role' => 'user', 'content' => "Summarize the following lecture transcript, focusing on the core important information and removing unnecessary details:\n\n$full_transcript"]

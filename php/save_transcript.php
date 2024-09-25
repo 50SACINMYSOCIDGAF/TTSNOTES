@@ -1,10 +1,6 @@
 <?php
 // php/save_transcript.php
 
-// Set up OpenAI API credentials
-$openai_api_key = 'YOUR_OPENAI_API_KEY';
-
-// Handle file upload
 if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chunkNumber'])) {
     $audio_file = $_FILES['audio']['tmp_name'];
     $lecture_name = $_POST['lectureName'];
@@ -27,12 +23,12 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
 
     // Save audio chunk
     if (move_uploaded_file($audio_file, $chunk_file)) {
-        // Transcribe audio using OpenAI Whisper API
+        // Transcribe audio using local Whisper server
         $curl = curl_init();
         $curlFile = new CURLFile($chunk_file, 'audio/webm', basename($chunk_file));
 
         curl_setopt_array($curl, [
-            CURLOPT_URL => "https://api.openai.com/v1/audio/transcriptions",
+            CURLOPT_URL => "http://193.60.100.220:5000/transcribe",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,
@@ -41,18 +37,15 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => [
-                'file' => $curlFile,
-                'model' => 'whisper-1',
-                'language' => 'en'  // Specify English language
+                'audio' => $curlFile
             ],
             CURLOPT_HTTPHEADER => [
-                "Authorization: Bearer {$openai_api_key}"
-            ],
+                "X-Forwarded-For: 46.105.204.28"
+            ]
         ]);
 
         $response = curl_exec($curl);
         $err = curl_error($curl);
-        $info = curl_getinfo($curl);
         curl_close($curl);
 
         if ($err) {
@@ -60,16 +53,11 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
             exit;
         }
 
-        if ($info['http_code'] != 200) {
-            echo json_encode(['success' => false, 'message' => 'API error: ' . $response]);
-            exit;
-        }
-
         $result = json_decode($response, true);
 
-        if (isset($result['text'])) {
+        if (isset($result['transcription'])) {
             // Append transcription to the complete transcript file
-            file_put_contents($transcript_file, $result['text'] . "\n", FILE_APPEND);
+            file_put_contents($transcript_file, $result['transcription'] . "\n", FILE_APPEND);
             echo json_encode(['success' => true, 'message' => 'Chunk saved and transcription appended']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Transcription failed: ' . json_encode($result)]);

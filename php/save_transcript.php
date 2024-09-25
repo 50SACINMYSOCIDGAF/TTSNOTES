@@ -42,7 +42,8 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => [
                 'file' => $curlFile,
-                'model' => 'whisper-1'
+                'model' => 'whisper-1',
+                'language' => 'en'  // Specify English language
             ],
             CURLOPT_HTTPHEADER => [
                 "Authorization: Bearer {$openai_api_key}"
@@ -51,10 +52,16 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
 
         $response = curl_exec($curl);
         $err = curl_error($curl);
+        $info = curl_getinfo($curl);
         curl_close($curl);
 
         if ($err) {
             echo json_encode(['success' => false, 'message' => 'Curl error: ' . $err]);
+            exit;
+        }
+
+        if ($info['http_code'] != 200) {
+            echo json_encode(['success' => false, 'message' => 'API error: ' . $response]);
             exit;
         }
 
@@ -68,7 +75,7 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
             echo json_encode(['success' => false, 'message' => 'Transcription failed: ' . json_encode($result)]);
         }
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to save audio chunk']);
+        echo json_encode(['success' => false, 'message' => 'Failed to save audio chunk. PHP error: ' . error_get_last()['message']]);
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'Invalid request']);

@@ -159,3 +159,9 @@ async function summarizeTranscript() {
         document.getElementById('status').textContent = 'Error generating summary';
     }
 }
+
+function displaySummary(summary) {
+    const summaryElement = document.getElementById('summary');
+    summaryElement.textContent = summary;
+    summaryElement.style.display = 'block'; // Ensure the summary element is visible
+}

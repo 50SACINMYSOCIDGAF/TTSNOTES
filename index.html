@@ -13,9 +13,43 @@
     <button id="startRecording">Start Recording</button>
     <button id="pauseRecording" disabled>Pause</button>
     <button id="stopRecording" disabled>Stop Recording</button>
+    <button id="clearCache">Clear Cache</button>
     <div id="status"></div>
     <div id="summary"></div>
 </div>
 <script src="js/main.js"></script>
+<script>
+    function formatSummary(summary) {
+        return summary.split('\n').map(line => {
+            if (line.startsWith('# ')) {
+                return `<h2>${line.substring(2)}</h2>`;
+            } else if (line.startsWith('## ')) {
+                return `<h3>${line.substring(3)}</h3>`;
+            } else {
+                return `<p>${line}</p>`;
+            }
+        }).join('');
+    }
+
+    // Override the existing summary display logic
+    function displaySummary(summary) {
+        document.getElementById('summary').innerHTML = formatSummary(summary);
+    }
+
+    document.getElementById('clearCache').addEventListener('click', async () => {
+        try {
+            const response = await fetch('php/clear_cache.php', { method: 'POST' });
+            const result = await response.json();
+            if (result.success) {
+                alert('Cache cleared successfully');
+            } else {
+                alert('Failed to clear cache: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+            alert('Error clearing cache');
+        }
+    });
+</script>
 </body>
 </html>

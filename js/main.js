@@ -149,7 +149,7 @@ async function summarizeTranscript() {
         });
         const result = await response.json();
         if (result.success) {
-            document.getElementById('summary').textContent = result.summary;
+            displaySummary(result.summary);
             document.getElementById('status').textContent = 'Summary generated';
         } else {
             throw new Error(result.error || 'Failed to summarize transcript');

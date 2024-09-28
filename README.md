@@ -32,12 +32,13 @@ This application allows you to record lectures, transcribe them, generate summar
    $api_key = '-';
    ```
    Replace the hyphen with your OpenAI API key, keeping it within the quotes.
+   **FOR ANY SUBJECTS THAT ARENT COMPUTER SCIENCE/CYBERSECURITY YOU WILL NEED TO UPDATE THE PROMPT IN SUMMARIZE.PHP TO YOUR SUBJECT TO GET A REPLY. IT IS `role => user, content` IN THE API REQUEST.
 
-5. Start your local web server:
+6. Start your local web server:
    - For XAMPP: Start Apache from the XAMPP Control Panel
    - For MAMP: Start the servers from the MAMP application
 
-6. Open a web browser and navigate to:
+7. Open a web browser and navigate to:
    - XAMPP: `http://localhost/your-project-folder`
    - MAMP: `http://localhost:8888/your-project-folder` (default port is 8888, might be different if you changed it)
 

@@ -32,7 +32,8 @@ This application allows you to record lectures, transcribe them, generate summar
    $api_key = '-';
    ```
    Replace the hyphen with your OpenAI API key, keeping it within the quotes.
-   /n**FOR ANY SUBJECTS THAT ARENT COMPUTER SCIENCE/CYBERSECURITY YOU WILL NEED TO UPDATE THE PROMPT IN SUMMARIZE.PHP TO YOUR SUBJECT TO GET A REPLY. IT IS `role => user, content` IN THE API REQUEST.**
+   
+ **FOR ANY SUBJECTS THAT ARENT COMPUTER SCIENCE/CYBERSECURITY YOU WILL NEED TO UPDATE THE PROMPT IN SUMMARIZE.PHP TO YOUR SUBJECT TO GET A REPLY. IT IS `role => user, content` IN THE API REQUEST.**
 
 6. Start your local web server:
    - For XAMPP: Start Apache from the XAMPP Control Panel

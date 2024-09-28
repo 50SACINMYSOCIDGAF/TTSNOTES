@@ -2,7 +2,7 @@
 // php/save_transcript.php
 
 // Set up OpenAI API credentials
-$openai_api_key = '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';
+$api_key = '-';
 
 // Handle file upload
 if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chunkNumber'])) {
@@ -46,7 +46,7 @@ if (isset($_FILES['audio']) && isset($_POST['lectureName']) && isset($_POST['chu
                 'language' => 'en'  // Specify English language
             ],
             CURLOPT_HTTPHEADER => [
-                "Authorization: Bearer {$openai_api_key}"
+                "Authorization: Bearer {$api_key}"
             ],
         ]);
 

@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,13 +8,19 @@
 <body>
 <div class="container">
     <h1>Lecture Recorder</h1>
-    <input type="text" id="lectureName" placeholder="Enter lecture name">
-    <button id="startRecording">Start Recording</button>
-    <button id="pauseRecording" disabled>Pause</button>
-    <button id="stopRecording" disabled>Stop Recording</button>
-    <button id="clearCache">Clear Cache</button>
+    <div class="recorder-controls">
+        <input type="text" id="lectureName" placeholder="Enter lecture name">
+        <div class="button-group">
+            <button id="startRecording">Start Recording</button>
+            <button id="pauseRecording" disabled>Pause</button>
+            <button id="stopRecording" disabled>Stop Recording</button>
+            <button id="clearCache">Clear Cache</button>
+        </div>
+    </div>
     <div id="status"></div>
     <div id="summary"></div>
+    <div id="pastSummaries"></div>
+    <div id="qnaInterface" style="display: none;"></div>
 </div>
 <script src="js/main.js"></script>
 <script>
@@ -30,26 +35,6 @@
             }
         }).join('');
     }
-
-    // Override the existing summary display logic
-    function displaySummary(summary) {
-        document.getElementById('summary').innerHTML = formatSummary(summary);
-    }
-
-    document.getElementById('clearCache').addEventListener('click', async () => {
-        try {
-            const response = await fetch('php/clear_cache.php', { method: 'POST' });
-            const result = await response.json();
-            if (result.success) {
-                alert('Cache cleared successfully');
-            } else {
-                alert('Failed to clear cache: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error clearing cache:', error);
-            alert('Error clearing cache');
-        }
-    });
 </script>
 </body>
 </html>

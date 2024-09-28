@@ -1,15 +1,134 @@
 /* css/styles.css */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --background-color: #ecf0f1;
+    --text-color: #34495e;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
+
 .container {
     max-width: 800px;
     margin: 0 auto;
+    padding: 20px;
 }
-button, input {
+
+h1 {
+    text-align: center;
+    color: var(--secondary-color);
+    margin-bottom: 30px;
+}
+
+.recorder-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input, button {
+    font-family: inherit;
+    font-size: 16px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+input {
+    width: 100%;
+    background-color: white;
+    border: 1px solid #bdc3c7;
+}
+
+input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button {
+    flex: 1;
+    min-width: 120px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    box-shadow: var(--box-shadow);
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+#status {
+    text-align: center;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+#summary, #pastSummaries {
+    background-color: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-top: 20px;
+}
+
+#pastSummaries {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.past-summary {
+    padding: 10px;
     margin: 10px 0;
-    padding: 5px 10px;
+    background-color: #f7f9fa;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.past-summary:hover {
+    background-color: #e8ebed;
+}
+
+#qnaInterface {
+    margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    input, button {
+        font-size: 14px;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
 }

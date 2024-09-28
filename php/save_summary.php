@@ -11,7 +11,7 @@ if (isset($input['lectureName']) && isset($input['summary'])) {
 
     // Generate file name
     $date = date('Y-m-d_H-i-s');
-    $summary_dir = "summaries";
+    $summary_dir = "../summaries";  // Changed to use the correct directory
     $summary_file = "{$summary_dir}/{$lecture_name}_{$date}_summary.txt";
 
     // Create summaries directory if it doesn't exist

@@ -4,14 +4,17 @@ let isPaused = false;
 let mediaRecorder;
 let audioChunks = [];
 let recordingInterval;
-const CHUNK_DURATION = 60000; // 1 minute in milliseconds
+const CHUNK_DURATION = 60000;
 let chunkCounter = 0;
 let pauseTime = 0;
 let resumeTime = 0;
 
-document.getElementById('startRecording').addEventListener('click', startRecording);
-document.getElementById('stopRecording').addEventListener('click', stopRecording);
-document.getElementById('pauseRecording').addEventListener('click', togglePause);
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('startRecording').addEventListener('click', startRecording);
+    document.getElementById('stopRecording').addEventListener('click', stopRecording);
+    document.getElementById('pauseRecording').addEventListener('click', togglePause);
+    loadPastSummaries();
+});
 
 async function startRecording() {
     const lectureName = document.getElementById('lectureName').value;
@@ -163,5 +166,101 @@ async function summarizeTranscript() {
 function displaySummary(summary) {
     const summaryElement = document.getElementById('summary');
     summaryElement.textContent = summary;
-    summaryElement.style.display = 'block'; // Ensure the summary element is visible
+    summaryElement.style.display = 'block';
+    saveSummary(summary);
+}
+
+async function saveSummary(summary) {
+    const lectureName = document.getElementById('lectureName').value;
+    try {
+        const response = await fetch('php/save_summary.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ lectureName, summary })
+        });
+        const result = await response.json();
+        if (result.success) {
+            console.log('Summary saved successfully');
+            loadPastSummaries();
+        } else {
+            console.error('Failed to save summary:', result.message);
+        }
+    } catch (error) {
+        console.error('Error saving summary:', error);
+    }
+}
+
+async function loadPastSummaries() {
+    try {
+        const response = await fetch('php/get_summaries.php');
+        const summaries = await response.json();
+        const pastSummariesElement = document.getElementById('pastSummaries');
+        pastSummariesElement.innerHTML = '';
+        summaries.forEach(summary => {
+            const summaryElement = document.createElement('div');
+            summaryElement.className = 'past-summary';
+            summaryElement.textContent = `${summary.name} (${summary.date})`;
+            summaryElement.addEventListener('click', () => loadSummary(summary.file));
+            pastSummariesElement.appendChild(summaryElement);
+        });
+    } catch (error) {
+        console.error('Error loading past summaries:', error);
+    }
+}
+
+async function loadSummary(file) {
+    try {
+        const response = await fetch(`php/get_summary.php?file=${file}`);
+        const summary = await response.text();
+        displaySummary(summary);
+        showQnAInterface(file);
+    } catch (error) {
+        console.error('Error loading summary:', error);
+    }
+}
+
+function showQnAInterface(file) {
+    const qnaInterface = document.getElementById('qnaInterface');
+    qnaInterface.innerHTML = `
+        <button id="qnaButton">Q&A</button>
+        <div id="qnaForm" style="display: none;">
+            <textarea id="questionInput" rows="3" placeholder="Enter your question"></textarea>
+            <button id="submitQuestion">Ask</button>
+        </div>
+        <div id="answer"></div>
+    `;
+    qnaInterface.style.display = 'block';
+
+    document.getElementById('qnaButton').addEventListener('click', () => {
+        document.getElementById('qnaForm').style.display = 'block';
+    });
+
+    document.getElementById('submitQuestion').addEventListener('click', () => askQuestion(file));
+}
+
+async function askQuestion(file) {
+    const question = document.getElementById('questionInput').value;
+    const summaryElement = document.getElementById('summary');
+    const summary = summaryElement.textContent;
+
+    try {
+        const response = await fetch('php/ask_question.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ file, question, summary })
+        });
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById('answer').textContent = result.answer;
+        } else {
+            document.getElementById('answer').textContent = 'Failed to get an answer. Please try again.';
+        }
+    } catch (error) {
+        console.error('Error asking question:', error);
+        document.getElementById('answer').textContent = 'An error occurred. Please try again.';
+    }
 }

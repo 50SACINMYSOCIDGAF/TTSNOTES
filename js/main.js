@@ -250,22 +250,18 @@ async function loadSummary(file) {
 function showQnAInterface(file) {
     const qnaInterface = document.getElementById('qnaInterface');
     qnaInterface.innerHTML = `
-        <button id="qnaButton" class="btn btn-primary">Q&A</button>
-        <div id="qnaForm" style="display: none;">
-            <textarea id="questionInput" rows="3" placeholder="Enter your question" class="form-control mt-2"></textarea>
-            <button id="submitQuestion" class="btn btn-primary mt-2">Ask</button>
+        <div id="qnaForm">
+            <textarea id="questionInput" rows="3" placeholder="Enter your question"></textarea>
+            <button id="submitQuestion">Ask</button>
         </div>
-        <div id="answer" class="mt-3 p-3 bg-light rounded"></div>
+        <div id="answer"></div>
     `;
     qnaInterface.style.display = 'block';
-
-    document.getElementById('qnaButton').addEventListener('click', () => {
-        document.getElementById('qnaForm').style.display = 'block';
-    });
 
     document.getElementById('submitQuestion').addEventListener('click', () => askQuestion(file));
 }
 
+// Update the askQuestion function
 async function askQuestion(file) {
     const question = document.getElementById('questionInput').value;
     const summaryElement = document.getElementById('summary');
@@ -282,16 +278,36 @@ async function askQuestion(file) {
         const result = await response.json();
         const answerElement = document.getElementById('answer');
         if (result.success) {
-            answerElement.textContent = result.answer;
+            answerElement.innerHTML = formatSummary(result.answer);
             answerElement.style.display = 'block';
         } else {
-            answerElement.textContent = 'Failed to get an answer. Please try again.';
+            answerElement.innerHTML = '<p>Failed to get an answer. Please try again.</p>';
             answerElement.style.display = 'block';
         }
     } catch (error) {
         console.error('Error asking question:', error);
         const answerElement = document.getElementById('answer');
-        answerElement.textContent = 'An error occurred. Please try again.';
+        answerElement.innerHTML = '<p>An error occurred. Please try again.</p>';
         answerElement.style.display = 'block';
     }
+}
+
+// Add the formatSummary function
+function formatSummary(summary) {
+    return summary.split('\n').map(line => {
+        if (line.startsWith('# ')) {
+            return `<h2>${line.substring(2)}</h2>`;
+        } else if (line.startsWith('## ')) {
+            return `<h3>${line.substring(3)}</h3>`;
+        } else {
+            return `<p>${line}</p>`;
+        }
+    }).join('');
+}
+
+// Update the displaySummary function
+function displaySummary(summary) {
+    const summaryElement = document.getElementById('summary');
+    summaryElement.innerHTML = formatSummary(summary);
+    summaryElement.style.display = 'block';
 }

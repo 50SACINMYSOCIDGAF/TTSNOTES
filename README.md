@@ -1,22 +1,27 @@
 # Lecture Recorder
 
-This application allows you to record lectures, transcribe them, generate summaries, and ask questions about the content.
+This application allows you to record lectures, transcribe them, generate summaries, and ask questions about the content. It can be run locally on your machine.
 
 ## Requirements
 
-- Web server with PHP support (e.g., XAMPP, MAMP)
+- Local web server with PHP support (e.g., XAMPP, MAMP, or WAMP)
 - PHP 7.4 or newer
 - Modern web browser
-- API keys for OpenAI
+- API key for OpenAI
 
-## Setup Instructions
+## Local Setup Instructions
 
-1. Clone the repository or download and extract the project files to your web server's directory.
+1. Install a local web server stack:
+   - Windows: XAMPP (https://www.apachefriends.org/)
+   - macOS: MAMP (https://www.mamp.info/)
+   - Linux: LAMP stack (Apache, MySQL, PHP)
 
-2. Obtain the necessary API key:
+2. Clone the repository or download and extract the project files to your local web server's document root (e.g., `htdocs` folder for XAMPP).
+
+3. Obtain the necessary API key:
    - OpenAI API: Create an account at https://openai.com/ and get your API key.
 
-3. Insert your API key in the following PHP files:
+4. Insert your API key in the following PHP files:
    - `php/ask_question.php`
    - `php/save_transcript.php`
    - `php/summarize.php`
@@ -27,7 +32,13 @@ This application allows you to record lectures, transcribe them, generate summar
    ```
    Replace the hyphen with your OpenAI API key, keeping it within the quotes.
 
-4. Start your web server and open the project in your browser.
+5. Start your local web server:
+   - For XAMPP: Start Apache from the XAMPP Control Panel
+   - For MAMP: Start the servers from the MAMP application
+
+6. Open a web browser and navigate to:
+   - XAMPP: `http://localhost/your-project-folder`
+   - MAMP: `http://localhost:8888/your-project-folder` (default port is 8888, might be different if you changed it)
 
 ## Usage
 
@@ -41,8 +52,9 @@ This application allows you to record lectures, transcribe them, generate summar
 
 If you encounter issues:
 - Verify that your API key is correctly entered in all three PHP files mentioned above.
-- Ensure your web server is running and PHP is properly configured.
+- Ensure your local web server is running and PHP is properly configured.
 - Check the browser console for any error messages.
+- Make sure your project files are in the correct directory of your local web server.
 
 For unresolved issues, please open an issue in the project's repository.
 

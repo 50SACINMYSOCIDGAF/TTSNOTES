@@ -3,7 +3,7 @@
 
 header('Content-Type: application/json');
 
-$api_key = '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';
+$api_key = '-';
 
 $input = json_decode(file_get_contents('php://input'), true);
 

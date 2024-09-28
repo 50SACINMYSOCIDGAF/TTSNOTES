@@ -1,21 +1,8 @@
 <?php
 // php/summarize.php
 
-// Enable error reporting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Set up logging
-ini_set('log_errors', 1);
-ini_set('error_log', 'summarize_error.log');
-
-// Increase memory limit and execution time
-ini_set('memory_limit', '256M');
-set_time_limit(300);
-
 // Set up API credentials
-$api_key = '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';
+$api_key = '-';
 
 try {
     // Get the input from the request

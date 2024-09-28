@@ -187,7 +187,7 @@ async function saveSummary(lectureName, summary) {
 
 function displaySummary(summary) {
     const summaryElement = document.getElementById('summary');
-    summaryElement.textContent = summary;
+    summaryElement.innerHTML = formatSummary(summary);
     summaryElement.style.display = 'block';
 }
 

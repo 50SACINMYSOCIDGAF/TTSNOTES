@@ -10,15 +10,21 @@ if (is_dir($summary_dir)) {
     $files = scandir($summary_dir);
     foreach ($files as $file) {
         if (strpos($file, '_summary.txt') !== false) {
-            $parts = explode('_', $file);
+            $parts = explode('_', pathinfo($file, PATHINFO_FILENAME));
+            $name = $parts[0];
+            $date = isset($parts[1]) ? $parts[1] : 'Unknown';
             $summaries[] = [
-                'name' => $parts[0],
-                'date' => $parts[1],
+                'name' => $name,
+                'date' => $date,
                 'file' => $file
             ];
         }
     }
 }
+
+usort($summaries, function($a, $b) {
+    return strcmp($b['date'], $a['date']);
+});
 
 echo json_encode($summaries);
 ?>

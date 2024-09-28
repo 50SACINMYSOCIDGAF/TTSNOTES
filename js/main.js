@@ -113,7 +113,8 @@ async function stopRecording() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Now summarize
-    summarizeTranscript();
+    await summarizeTranscript();
+    loadPastSummaries(); // Reload past summaries after stopping recording
 }
 
 async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
@@ -152,8 +153,9 @@ async function summarizeTranscript() {
         });
         const result = await response.json();
         if (result.success) {
+            await saveSummary(lectureName, result.summary);
             displaySummary(result.summary);
-            document.getElementById('status').textContent = 'Summary generated';
+            document.getElementById('status').textContent = 'Summary generated and saved';
         } else {
             throw new Error(result.error || 'Failed to summarize transcript');
         }
@@ -163,15 +165,7 @@ async function summarizeTranscript() {
     }
 }
 
-function displaySummary(summary) {
-    const summaryElement = document.getElementById('summary');
-    summaryElement.textContent = summary;
-    summaryElement.style.display = 'block';
-    saveSummary(summary);
-}
-
-async function saveSummary(summary) {
-    const lectureName = document.getElementById('lectureName').value;
+async function saveSummary(lectureName, summary) {
     try {
         const response = await fetch('php/save_summary.php', {
             method: 'POST',
@@ -181,15 +175,20 @@ async function saveSummary(summary) {
             body: JSON.stringify({ lectureName, summary })
         });
         const result = await response.json();
-        if (result.success) {
-            console.log('Summary saved successfully');
-            loadPastSummaries();
-        } else {
-            console.error('Failed to save summary:', result.message);
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to save summary');
         }
+        console.log('Summary saved successfully');
     } catch (error) {
         console.error('Error saving summary:', error);
+        throw error; // Re-throw to be caught in the calling function
     }
+}
+
+function displaySummary(summary) {
+    const summaryElement = document.getElementById('summary');
+    summaryElement.textContent = summary;
+    summaryElement.style.display = 'block';
 }
 
 async function loadPastSummaries() {
@@ -224,12 +223,12 @@ async function loadSummary(file) {
 function showQnAInterface(file) {
     const qnaInterface = document.getElementById('qnaInterface');
     qnaInterface.innerHTML = `
-        <button id="qnaButton">Q&A</button>
+        <button id="qnaButton" class="btn btn-primary">Q&A</button>
         <div id="qnaForm" style="display: none;">
-            <textarea id="questionInput" rows="3" placeholder="Enter your question"></textarea>
-            <button id="submitQuestion">Ask</button>
+            <textarea id="questionInput" rows="3" placeholder="Enter your question" class="form-control mt-2"></textarea>
+            <button id="submitQuestion" class="btn btn-primary mt-2">Ask</button>
         </div>
-        <div id="answer"></div>
+        <div id="answer" class="mt-3 p-3 bg-light rounded"></div>
     `;
     qnaInterface.style.display = 'block';
 
@@ -254,13 +253,18 @@ async function askQuestion(file) {
             body: JSON.stringify({ file, question, summary })
         });
         const result = await response.json();
+        const answerElement = document.getElementById('answer');
         if (result.success) {
-            document.getElementById('answer').textContent = result.answer;
+            answerElement.textContent = result.answer;
+            answerElement.style.display = 'block';
         } else {
-            document.getElementById('answer').textContent = 'Failed to get an answer. Please try again.';
+            answerElement.textContent = 'Failed to get an answer. Please try again.';
+            answerElement.style.display = 'block';
         }
     } catch (error) {
         console.error('Error asking question:', error);
-        document.getElementById('answer').textContent = 'An error occurred. Please try again.';
+        const answerElement = document.getElementById('answer');
+        answerElement.textContent = 'An error occurred. Please try again.';
+        answerElement.style.display = 'block';
     }
 }

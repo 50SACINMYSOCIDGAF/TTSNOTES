@@ -9,7 +9,7 @@ if (isset($input['lectureName']) && isset($input['chunkNumber'])) {
     $lecture_name = $input['lectureName'];
     $chunk_number = $input['chunkNumber'];
     $date = date('Y-m-d');
-    $chunk_file = "chunks/{$lecture_name}_{$date}_chunk_{$chunk_number}.mp3";
+    $chunk_file = "chunks/{$lecture_name}_{$date}_chunk_{$chunk_number}.webm";
 
     if (file_exists($chunk_file)) {
         if (unlink($chunk_file)) {

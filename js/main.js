@@ -134,9 +134,36 @@ async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
             throw new Error(result.message || 'Transcription failed');
         }
         document.getElementById('status').textContent = `Chunk ${chunkNumber} processed successfully`;
+
+        // Check if we need to delete the oldest chunk
+        if (chunkNumber >= 5) {
+            await deleteOldestChunk();
+        }
     } catch (error) {
         console.error('Error saving and transcribing audio:', error);
         document.getElementById('status').textContent = `Error processing chunk ${chunkNumber}`;
+    }
+}
+
+async function deleteOldestChunk() {
+    const lectureName = document.getElementById('lectureName').value;
+    const oldestChunkNumber = chunkCounter - 5;
+
+    try {
+        const response = await fetch('php/delete_chunk.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ lectureName, chunkNumber: oldestChunkNumber })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to delete oldest chunk');
+        }
+        console.log('Oldest chunk deleted successfully');
+    } catch (error) {
+        console.error('Error deleting oldest chunk:', error);
     }
 }
 

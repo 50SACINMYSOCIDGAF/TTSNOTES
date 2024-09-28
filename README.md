@@ -20,6 +20,7 @@ This application allows you to record lectures, transcribe them, generate summar
 
 3. Obtain the necessary API key:
    - OpenAI API: Create an account at https://openai.com/ and get your API key.
+   - Top up the balance on your account to around $10, this will last for around a month with 10 hours of recording a week.
 
 4. Insert your API key in the following PHP files:
    - `php/ask_question.php`

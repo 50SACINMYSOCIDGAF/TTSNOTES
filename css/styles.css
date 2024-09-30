@@ -33,6 +33,7 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
 }
 
 input, button {
@@ -42,23 +43,25 @@ input, button {
     border: none;
     border-radius: var(--border-radius);
     transition: all 0.3s ease;
+    width: 100%; /* Make all inputs and buttons full width */
+    box-sizing: border-box; /* Include padding and border in element's total width */
 }
 
 input {
-    width: 100%;
     background-color: white;
     border: 1px solid #bdc3c7;
-}
-
-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 .button-group {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    width: 100%;
+}
+
+.button-group button {
+    flex: 1;
+    min-width: 120px;
 }
 
 button {
@@ -156,22 +159,81 @@ button:disabled {
     white-space: pre-wrap;
 }
 
-#answer h2 {
-    font-size: 1.5em;
-    color: var(--secondary-color);
+/* New styles for summary content and copy button */
+.summary-content {
+    position: relative;
+    padding: 20px;
+    border: 1px solid #bdc3c7;
+    border-radius: var(--border-radius);
+    background-color: white;
+    margin-top: 20px;
+    box-shadow: var(--box-shadow);
+}
+
+.copy-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    width: auto; /* Override the width: 100% for this specific button */
+}
+
+.copy-button:hover {
+    background-color: #2980b9;
+}
+
+/* Styles for code blocks */
+pre {
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    padding: 15px;
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+}
+
+/* Inline code style */
+p code, li code {
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* Additional styles for summary content */
+.summary-content h1 {
+    font-size: 24px;
     margin-top: 20px;
     margin-bottom: 10px;
 }
 
-#answer h3 {
-    font-size: 1.2em;
-    color: var(--secondary-color);
+.summary-content h2 {
+    font-size: 20px;
     margin-top: 15px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
-#answer p {
+.summary-content h3 {
+    font-size: 18px;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+
+.summary-content p, .summary-content li {
     margin-bottom: 10px;
+}
+
+.summary-content ul, .summary-content ol {
+    padding-left: 20px;
 }
 
 @media (max-width: 600px) {
@@ -182,5 +244,15 @@ button:disabled {
     #submitQuestion {
         align-self: stretch;
         margin-top: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .button-group {
+        flex-direction: column;
+    }
+
+    .button-group button {
+        width: 100%;
     }
 }

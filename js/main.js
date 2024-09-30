@@ -294,15 +294,83 @@ async function askQuestion(file) {
 
 // Add the formatSummary function
 function formatSummary(summary) {
-    return summary.split('\n').map(line => {
-        if (line.startsWith('# ')) {
-            return `<h2>${line.substring(2)}</h2>`;
+    const lines = summary.split('\n');
+    let formattedContent = '<div class="summary-content">';
+    let inCodeBlock = false;
+    let codeLanguage = '';
+
+    formattedContent += '<button id="copySummaryBtn" class="copy-button">Copy Summary</button>';
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+
+        if (line === '---') {
+            formattedContent += '<hr>\n';
+        } else if (line.startsWith('```')) {
+            if (inCodeBlock) {
+                formattedContent += '</code></pre>\n';
+                inCodeBlock = false;
+            } else {
+                codeLanguage = line.slice(3).toLowerCase();
+                formattedContent += `<pre><code class="language-${codeLanguage}">\n`;
+                inCodeBlock = true;
+            }
+        } else if (inCodeBlock) {
+            formattedContent += escapeHtml(line) + '\n';
+        } else if (line.startsWith('# ')) {
+            formattedContent += `<h1>${line.substring(2)}</h1>\n`;
         } else if (line.startsWith('## ')) {
-            return `<h3>${line.substring(3)}</h3>`;
+            formattedContent += `<h2>${line.substring(3)}</h2>\n`;
+        } else if (line.startsWith('### ')) {
+            formattedContent += `<h3>${line.substring(4)}</h3>\n`;
+        } else if (line.startsWith('- ')) {
+            formattedContent += `<li>${formatInlineMarkdown(line.substring(2))}</li>\n`;
+        } else if (line === '') {
+            formattedContent += '<br>\n';
         } else {
-            return `<p>${line}</p>`;
+            formattedContent += `<p>${formatInlineMarkdown(line)}</p>\n`;
         }
-    }).join('');
+    }
+
+    formattedContent += '</div>';
+
+    setTimeout(() => {
+        const copyButton = document.getElementById('copySummaryBtn');
+        if (copyButton) {
+            copyButton.addEventListener('click', function() {
+                const summaryContent = document.querySelector('.summary-content').innerText;
+                navigator.clipboard.writeText(summaryContent).then(function() {
+                    alert('Summary copied to clipboard!');
+                }, function(err) {
+                    console.error('Could not copy text: ', err);
+                });
+            });
+        }
+    }, 0);
+
+    return formattedContent;
+}
+
+function formatInlineMarkdown(text) {
+    // Handle bold text
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Handle italic text
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Handle inline code
+    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+
+    return text;
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // Update the displaySummary function

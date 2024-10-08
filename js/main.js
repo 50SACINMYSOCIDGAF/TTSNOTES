@@ -14,6 +14,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stopRecording').addEventListener('click', stopRecording);
     document.getElementById('pauseRecording').addEventListener('click', togglePause);
     loadPastSummaries();
+    const settingsContainer = document.createElement('div');
+    settingsContainer.className = 'settings-container';
+
+    const settingsLink = document.createElement('a');
+    settingsLink.href = 'settings.html';
+    settingsLink.textContent = 'Settings';
+    settingsLink.className = 'settings-link';
+
+    const settingsIndicator = document.createElement('span');
+    settingsIndicator.className = 'settings-indicator';
+
+    settingsContainer.appendChild(settingsLink);
+    settingsContainer.appendChild(settingsIndicator);
+    document.querySelector('.container').appendChild(settingsContainer);
+
+    const userSettings = JSON.parse(localStorage.getItem('userSettings')) || {};
+    if (userSettings.degree && userSettings.lectures && userSettings.lectures.length > 0) {
+        settingsIndicator.textContent = ' ✓';
+        settingsIndicator.title = 'Settings configured';
+        settingsIndicator.className = 'settings-indicator configured';
+    } else {
+        settingsIndicator.textContent = ' X';
+        settingsIndicator.title = 'Settings not configured';
+        settingsIndicator.className = 'settings-indicator not-configured';
+    }
 });
 
 async function startRecording() {
@@ -292,58 +317,67 @@ async function askQuestion(file) {
     }
 }
 
-// Add the formatSummary function
-function formatSummary(summary) {
-    const lines = summary.split('\n');
-    let formattedContent = '<div class="summary-content">';
+function markdownToRTF(markdown) {
+    let rtf = '{\\rtf1\\ansi\\deff0 {\\fonttbl{\\f0 Arial;}{\\f1 Courier New;}}\n';
     let inCodeBlock = false;
-    let codeLanguage = '';
+    let lines = markdown.split('\n');
 
-    formattedContent += '<button id="copySummaryBtn" class="copy-button">Copy Summary</button>';
+    for (let line of lines) {
+        if (line.startsWith('```')) {
+            inCodeBlock = !inCodeBlock;
+            continue;
+        }
 
-    for (let i = 0; i < lines.length; i++) {
-        let line = lines[i].trim();
-
-        if (line === '---') {
-            formattedContent += '<hr>\n';
-        } else if (line.startsWith('```')) {
-            if (inCodeBlock) {
-                formattedContent += '</code></pre>\n';
-                inCodeBlock = false;
-            } else {
-                codeLanguage = line.slice(3).toLowerCase();
-                formattedContent += `<pre><code class="language-${codeLanguage}">\n`;
-                inCodeBlock = true;
-            }
-        } else if (inCodeBlock) {
-            formattedContent += escapeHtml(line) + '\n';
+        if (inCodeBlock) {
+            rtf += '{\\f1 ' + line.replace(/[\\{}]/g, '\\$&') + '}\\par\n';
         } else if (line.startsWith('# ')) {
-            formattedContent += `<h1>${line.substring(2)}</h1>\n`;
+            rtf += '{\\f0\\fs36\\b ' + line.substring(2).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
         } else if (line.startsWith('## ')) {
-            formattedContent += `<h2>${line.substring(3)}</h2>\n`;
+            rtf += '{\\f0\\fs32\\b ' + line.substring(3).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
         } else if (line.startsWith('### ')) {
-            formattedContent += `<h3>${line.substring(4)}</h3>\n`;
+            rtf += '{\\f0\\fs28\\b ' + line.substring(4).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
         } else if (line.startsWith('- ')) {
-            formattedContent += `<li>${formatInlineMarkdown(line.substring(2))}</li>\n`;
+            rtf += '{\\f0\\fs24 \u8226 ' + line.substring(2).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
         } else if (line === '') {
-            formattedContent += '<br>\n';
+            rtf += '\\par\n';
         } else {
-            formattedContent += `<p>${formatInlineMarkdown(line)}</p>\n`;
+            // Handle inline formatting
+            line = line.replace(/\*\*(.*?)\*\*/g, '{\\b $1}')  // Bold
+                .replace(/\*(.*?)\*/g, '{\\i $1}')      // Italic
+                .replace(/`(.*?)`/g, '{\\f1 $1}')       // Inline code
+                .replace(/\[(.*?)\]\((.*?)\)/g, '{\\field{\\*\\fldinst{HYPERLINK "$2"}}{\\fldrslt{\\ul $1}}}');  // Links
+            rtf += '{\\f0\\fs24 ' + line.replace(/[\\{}]/g, '\\$&') + '}\\par\n';
         }
     }
 
+    rtf += '}';
+    return rtf;
+}
+
+function formatSummary(summary) {
+    const rtfContent = markdownToRTF(summary);
+
+    let formattedContent = '<div class="summary-content">';
+    formattedContent += '<button id="copySummaryBtn" class="copy-button">Copy Summary</button>';
+    formattedContent += `<pre>${escapeHtml(summary)}</pre>`;
     formattedContent += '</div>';
 
     setTimeout(() => {
         const copyButton = document.getElementById('copySummaryBtn');
         if (copyButton) {
             copyButton.addEventListener('click', function() {
-                const summaryContent = document.querySelector('.summary-content').innerText;
-                navigator.clipboard.writeText(summaryContent).then(function() {
-                    alert('Summary copied to clipboard!');
-                }, function(err) {
-                    console.error('Could not copy text: ', err);
-                });
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    const blob = new Blob([rtfContent], {type: 'text/rtf'});
+                    const clipboardItem = new ClipboardItem({'text/rtf': blob});
+                    navigator.clipboard.write([clipboardItem]).then(function() {
+                        alert('Summary copied to clipboard in RTF format!');
+                    }, function(err) {
+                        console.error('Could not copy text: ', err);
+                        fallbackCopy(summary);
+                    });
+                } else {
+                    fallbackCopy(summary);
+                }
             });
         }
     }, 0);
@@ -351,19 +385,20 @@ function formatSummary(summary) {
     return formattedContent;
 }
 
-function formatInlineMarkdown(text) {
-    // Handle bold text
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-    // Handle italic text
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-    // Handle inline code
-    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-
-    return text;
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        alert('Summary copied to clipboard as plain text. Formatting may be lost.');
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        alert('Failed to copy summary. Please try selecting and copying manually.');
+    }
+    document.body.removeChild(textArea);
 }
-
 function escapeHtml(unsafe) {
     return unsafe
         .replace(/&/g, "&amp;")

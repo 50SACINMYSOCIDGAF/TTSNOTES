@@ -236,6 +236,89 @@ p code, li code {
     padding-left: 20px;
 }
 
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.button-container button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.save-button {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.reset-button {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.button-separator {
+    width: 1px;
+    height: 30px;
+    background-color: #ccc;
+    margin: 0 10px;
+}
+
+/* Styles for the settings link on the main page */
+.settings-link {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s;
+}
+
+.settings-link:hover {
+    background-color: #2980b9;
+}
+
 @media (max-width: 600px) {
     #qnaForm {
         flex-direction: column;

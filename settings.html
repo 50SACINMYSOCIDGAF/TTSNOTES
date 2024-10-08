@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture Recorder Settings</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Settings</h1>
+    <form id="settingsForm">
+        <div class="form-group">
+            <label for="degree">Degree:</label>
+            <input type="text" id="degree" name="degree" required>
+        </div>
+        <div class="form-group">
+            <label for="lectures">Lectures (one per line):</label>
+            <textarea id="lectures" name="lectures" rows="5" required></textarea>
+        </div>
+        <button type="submit">Save Settings</button>
+    </form>
+    <a href="index.html" class="back-link">Back to Recorder</a>
+</div>
+<script src="js/settings.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <?php
-// php/summarize.php
+// /summarize.php
 
 // Set up API credentials
 $api_key = '-';

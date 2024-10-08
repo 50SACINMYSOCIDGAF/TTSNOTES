@@ -1,4 +1,4 @@
-// js/main.js
+// /main.js
 let isRecording = false;
 let isPaused = false;
 let mediaRecorder;

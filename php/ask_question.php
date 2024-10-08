@@ -1,5 +1,5 @@
 <?php
-// php/ask_question.php
+// /ask_question.php
 
 header('Content-Type: application/json');
 

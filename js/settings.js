@@ -1,3 +1,4 @@
+// /settings.js
 document.addEventListener('DOMContentLoaded', () => {
     const settingsForm = document.getElementById('settingsForm');
     const degreeInput = document.getElementById('degree');

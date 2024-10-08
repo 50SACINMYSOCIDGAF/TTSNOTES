@@ -326,36 +326,31 @@ async function askQuestion(lectureName, file) {
 
 function markdownToHtml(markdown) {
     let html = markdown
+        // Headers
         .replace(/^# (.*$)/gm, '<h1>$1</h1>')
         .replace(/^## (.*$)/gm, '<h2>$1</h2>')
         .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-        .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
-        .replace(/^\*(.*)\*/gm, '<em>$1</em>')
-        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2">$1</a>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Code blocks
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+        // Inline code
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-        .replace(/\n\n/g, '<br><br>');
+        // Lists
+        .replace(/^\s*- (.*$)/gm, '<li>$1</li>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2">$1</a>')
+        // Paragraphs
+        .replace(/\n\n/g, '</p><p>');
 
-    // Handle nested lists
-    let listLevel = 0;
-    html = html.replace(/^( *)- (.*$)/gm, (match, spaces, content) => {
-        const level = spaces.length / 2;
-        let result = '';
+    // Wrap content in paragraphs
+    html = '<p>' + html + '</p>';
 
-        if (level > listLevel) {
-            result += '<ul>'.repeat(level - listLevel);
-        } else if (level < listLevel) {
-            result += '</ul>'.repeat(listLevel - level);
-        }
-
-        result += `<li>${content}</li>`;
-        listLevel = level;
-
-        return result;
-    });
-
-    // Close any remaining list tags
-    html += '</ul>'.repeat(listLevel);
+    // Wrap lists
+    html = html.replace(/<li>.*?(<\/li>)/g, '<ul>$&</ul>');
+    html = html.replace(/<\/ul>\s*<ul>/g, '');
 
     return html;
 }
@@ -462,6 +457,7 @@ function addSettingsLink() {
 }
 
 // CSS styles
+
 const styles = `
     .summary-content {
         position: relative;
@@ -469,6 +465,8 @@ const styles = `
         padding: 30px;
         margin-top: 20px;
         background-color: #f9f9f9;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
     }
     .copy-container {
         position: absolute;
@@ -504,6 +502,41 @@ const styles = `
     }
     .summary-text {
         margin-top: 40px;
+    }
+    .summary-text h1 {
+        font-size: 24px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+    .summary-text h2 {
+        font-size: 20px;
+        margin-top: 20px;
+    }
+    .summary-text h3 {
+        font-size: 18px;
+        margin-top: 15px;
+    }
+    .summary-text ul {
+        padding-left: 20px;
+    }
+    .summary-text li {
+        margin-bottom: 5px;
+    }
+    .summary-text code {
+        background-color: #f0f0f0;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    .summary-text pre {
+        background-color: #f0f0f0;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+    .summary-text pre code {
+        background-color: transparent;
+        padding: 0;
     }
     .settings-container {
         margin-top: 20px;

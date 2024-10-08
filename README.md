@@ -33,7 +33,6 @@ This application allows you to record lectures, transcribe them, generate summar
    ```
    Replace the hyphen with your OpenAI API key, keeping it within the quotes.
    
- **FOR ANY SUBJECTS THAT ARENT COMPUTER SCIENCE/CYBERSECURITY YOU WILL NEED TO UPDATE THE PROMPT IN SUMMARIZE.PHP TO YOUR SUBJECT TO GET A REPLY. IT IS `role => user, content` IN THE API REQUEST.**
 
 6. Start your local web server:
    - For XAMPP: Start Apache from the XAMPP Control Panel
@@ -45,11 +44,12 @@ This application allows you to record lectures, transcribe them, generate summar
 
 ## Usage
 
-1. Enter the lecture name in the provided field.
-2. Click "Start Recording" to begin.
-3. When finished, click "Stop Recording".
-4. Wait for the summary to be generated.
-5. To ask questions about the lecture, click on the summary and use the Q&A interface.
+1. Enter your degree and courses in settings.
+2. Select your course from the drop down.
+3. Click "Start Recording" to begin.
+4. When finished, click "Stop Recording".
+5. Wait for the summary to be generated.
+6. To ask questions about the lecture, click on the summary and use the Q&A interface.
 
 ## Troubleshooting
 

@@ -14,12 +14,13 @@
     <h1>Lecture Recorder</h1>
 
     <div class="recorder-controls">
-        <input type="text" id="lectureName" placeholder="Enter lecture name">
+        <select id="lectureSelect"></select>
         <div class="button-group">
             <button id="startRecording">Start Recording</button>
-            <button id="pauseRecording">Pause</button>
+            <button id="pauseRecording" disabled>Pause</button>
             <button id="stopRecording" disabled>Stop Recording</button>
         </div>
+        <button id="fixStuckFiles">Fix Stuck Files</button>
     </div>
 
     <div id="status"></div>

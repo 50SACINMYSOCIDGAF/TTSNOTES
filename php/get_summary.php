@@ -3,10 +3,13 @@
 
 header('Content-Type: text/plain');
 
-if (isset($_GET['file'])) {
-    $file = "../summaries/" . $_GET['file'];
-    if (file_exists($file)) {
-        echo file_get_contents($file);
+if (isset($_GET['lecture']) && isset($_GET['file'])) {
+    $lecture = $_GET['lecture'];
+    $file = $_GET['file'];
+    $summary_path = __DIR__ . "/../summaries/{$lecture}/{$file}";
+
+    if (file_exists($summary_path)) {
+        echo file_get_contents($summary_path);
     } else {
         http_response_code(404);
         echo "Summary not found";

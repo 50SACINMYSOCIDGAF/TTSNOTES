@@ -10,41 +10,45 @@ let pauseTime = 0;
 let resumeTime = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
+    initializeUI();
+    loadPastSummaries();
+    populateLectureDropdown();
+    addSettingsLink();
+});
+
+function initializeUI() {
     document.getElementById('startRecording').addEventListener('click', startRecording);
     document.getElementById('stopRecording').addEventListener('click', stopRecording);
     document.getElementById('pauseRecording').addEventListener('click', togglePause);
-    loadPastSummaries();
-    const settingsContainer = document.createElement('div');
-    settingsContainer.className = 'settings-container';
+    document.getElementById('fixStuckFiles').addEventListener('click', fixStuckFiles);
+}
 
-    const settingsLink = document.createElement('a');
-    settingsLink.href = 'settings.html';
-    settingsLink.textContent = 'Settings';
-    settingsLink.className = 'settings-link';
-
-    const settingsIndicator = document.createElement('span');
-    settingsIndicator.className = 'settings-indicator';
-
-    settingsContainer.appendChild(settingsLink);
-    settingsContainer.appendChild(settingsIndicator);
-    document.querySelector('.container').appendChild(settingsContainer);
-
+function populateLectureDropdown() {
+    const lectureSelect = document.getElementById('lectureSelect');
     const userSettings = JSON.parse(localStorage.getItem('userSettings')) || {};
-    if (userSettings.degree && userSettings.lectures && userSettings.lectures.length > 0) {
-        settingsIndicator.textContent = ' ✓';
-        settingsIndicator.title = 'Settings configured';
-        settingsIndicator.className = 'settings-indicator configured';
+    const lectures = userSettings.lectures || [];
+
+    lectureSelect.innerHTML = '';
+    if (lectures.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No lectures available';
+        lectureSelect.appendChild(option);
     } else {
-        settingsIndicator.textContent = ' X';
-        settingsIndicator.title = 'Settings not configured';
-        settingsIndicator.className = 'settings-indicator not-configured';
+        lectures.forEach(lecture => {
+            const option = document.createElement('option');
+            option.value = lecture;
+            option.textContent = lecture;
+            lectureSelect.appendChild(option);
+        });
     }
-});
+}
 
 async function startRecording() {
-    const lectureName = document.getElementById('lectureName').value;
-    if (!lectureName) {
-        alert('Please enter a lecture name');
+    const lectureSelect = document.getElementById('lectureSelect');
+    const selectedLecture = lectureSelect.value;
+    if (!selectedLecture) {
+        alert('Please select a lecture');
         return;
     }
 
@@ -52,11 +56,7 @@ async function startRecording() {
     isPaused = false;
     chunkCounter = 0;
     audioChunks = [];
-    document.getElementById('startRecording').disabled = true;
-    document.getElementById('stopRecording').disabled = false;
-    document.getElementById('pauseRecording').disabled = false;
-    document.getElementById('pauseRecording').textContent = 'Pause';
-    document.getElementById('status').textContent = 'Recording...';
+    updateUIForRecordingStart();
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -84,7 +84,7 @@ async function startRecording() {
 
     } catch (error) {
         console.error('Error starting recording:', error);
-        document.getElementById('status').textContent = 'Error starting recording';
+        updateStatus('Error starting recording');
     }
 }
 
@@ -112,12 +112,12 @@ function togglePause() {
             mediaRecorder.stop();
         }
         pauseButton.textContent = 'Resume';
-        document.getElementById('status').textContent = 'Paused';
+        updateStatus('Paused');
     } else {
         resumeTime = Date.now();
         startNewChunk();
         pauseButton.textContent = 'Pause';
-        document.getElementById('status').textContent = 'Recording...';
+        updateStatus('Recording...');
     }
 }
 
@@ -125,10 +125,7 @@ async function stopRecording() {
     isRecording = false;
     isPaused = false;
     clearTimeout(recordingInterval);
-    document.getElementById('startRecording').disabled = false;
-    document.getElementById('stopRecording').disabled = true;
-    document.getElementById('pauseRecording').disabled = true;
-    document.getElementById('status').textContent = 'Recording stopped. Processing final chunk...';
+    updateUIForRecordingStop();
 
     if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
@@ -145,7 +142,7 @@ async function stopRecording() {
 async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
     const formData = new FormData();
     formData.append('audio', audioBlob, `recording_${chunkNumber}.webm`);
-    formData.append('lectureName', document.getElementById('lectureName').value);
+    formData.append('lectureName', document.getElementById('lectureSelect').value);
     formData.append('chunkNumber', chunkNumber);
 
     try {
@@ -158,7 +155,7 @@ async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
         if (!result.success) {
             throw new Error(result.message || 'Transcription failed');
         }
-        document.getElementById('status').textContent = `Chunk ${chunkNumber} processed successfully`;
+        updateStatus(`Chunk ${chunkNumber} processed successfully`);
 
         // Check if we need to delete the oldest chunk
         if (chunkNumber >= 5) {
@@ -166,12 +163,12 @@ async function saveAndTranscribeAudio(audioBlob, chunkNumber) {
         }
     } catch (error) {
         console.error('Error saving and transcribing audio:', error);
-        document.getElementById('status').textContent = `Error processing chunk ${chunkNumber}`;
+        updateStatus(`Error processing chunk ${chunkNumber}`);
     }
 }
 
 async function deleteOldestChunk() {
-    const lectureName = document.getElementById('lectureName').value;
+    const lectureName = document.getElementById('lectureSelect').value;
     const oldestChunkNumber = chunkCounter - 5;
 
     try {
@@ -193,8 +190,8 @@ async function deleteOldestChunk() {
 }
 
 async function summarizeTranscript() {
-    const lectureName = document.getElementById('lectureName').value;
-    document.getElementById('status').textContent = 'Generating summary...';
+    const lectureName = document.getElementById('lectureSelect').value;
+    updateStatus('Generating summary...');
     try {
         const response = await fetch('php/summarize.php', {
             method: 'POST',
@@ -207,13 +204,13 @@ async function summarizeTranscript() {
         if (result.success) {
             await saveSummary(lectureName, result.summary);
             displaySummary(result.summary);
-            document.getElementById('status').textContent = 'Summary generated and saved';
+            updateStatus('Summary generated and saved');
         } else {
             throw new Error(result.error || 'Failed to summarize transcript');
         }
     } catch (error) {
         console.error('Error summarizing transcript:', error);
-        document.getElementById('status').textContent = 'Error generating summary';
+        updateStatus('Error generating summary');
     }
 }
 
@@ -239,40 +236,51 @@ async function saveSummary(lectureName, summary) {
 
 function displaySummary(summary) {
     const summaryElement = document.getElementById('summary');
-    summaryElement.innerHTML = formatSummary(summary);  // Replace content instead of appending
+    summaryElement.innerHTML = formatSummary(summary);
     summaryElement.style.display = 'block';
 }
 
 async function loadPastSummaries() {
     try {
         const response = await fetch('php/get_summaries.php');
-        const summaries = await response.json();
+        const lectures = await response.json();
         const pastSummariesElement = document.getElementById('pastSummaries');
         pastSummariesElement.innerHTML = '';
-        summaries.forEach(summary => {
-            const summaryElement = document.createElement('div');
-            summaryElement.className = 'past-summary';
-            summaryElement.textContent = `${summary.name} (${summary.date})`;
-            summaryElement.addEventListener('click', () => loadSummary(summary.file));
-            pastSummariesElement.appendChild(summaryElement);
+
+        lectures.forEach(lecture => {
+            const lectureElement = document.createElement('div');
+            lectureElement.className = 'lecture-folder';
+            lectureElement.innerHTML = `<h3>${lecture.name}</h3>`;
+
+            const summariesList = document.createElement('ul');
+            lecture.summaries.forEach(summary => {
+                const summaryElement = document.createElement('li');
+                summaryElement.className = 'past-summary';
+                summaryElement.textContent = `${summary.topic} (${summary.date})`;
+                summaryElement.addEventListener('click', () => loadSummary(lecture.name, summary.file));
+                summariesList.appendChild(summaryElement);
+            });
+
+            lectureElement.appendChild(summariesList);
+            pastSummariesElement.appendChild(lectureElement);
         });
     } catch (error) {
         console.error('Error loading past summaries:', error);
     }
 }
 
-async function loadSummary(file) {
+async function loadSummary(lectureName, file) {
     try {
-        const response = await fetch(`php/get_summary.php?file=${file}`);
+        const response = await fetch(`php/get_summary.php?lecture=${lectureName}&file=${file}`);
         const summary = await response.text();
         displaySummary(summary);
-        showQnAInterface(file);
+        showQnAInterface(lectureName, file);
     } catch (error) {
         console.error('Error loading summary:', error);
     }
 }
 
-function showQnAInterface(file) {
+function showQnAInterface(lectureName, file) {
     const qnaInterface = document.getElementById('qnaInterface');
     qnaInterface.innerHTML = `
         <div id="qnaForm">
@@ -283,11 +291,10 @@ function showQnAInterface(file) {
     `;
     qnaInterface.style.display = 'block';
 
-    document.getElementById('submitQuestion').addEventListener('click', () => askQuestion(file));
+    document.getElementById('submitQuestion').addEventListener('click', () => askQuestion(lectureName, file));
 }
 
-// Update the askQuestion function
-async function askQuestion(file) {
+async function askQuestion(lectureName, file) {
     const question = document.getElementById('questionInput').value;
     const summaryElement = document.getElementById('summary');
     const summary = summaryElement.textContent;
@@ -298,7 +305,7 @@ async function askQuestion(file) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ file, question, summary })
+            body: JSON.stringify({ lectureName, file, question, summary })
         });
         const result = await response.json();
         const answerElement = document.getElementById('answer');
@@ -317,66 +324,103 @@ async function askQuestion(file) {
     }
 }
 
-function markdownToRTF(markdown) {
-    let rtf = '{\\rtf1\\ansi\\deff0 {\\fonttbl{\\f0 Arial;}{\\f1 Courier New;}}\n';
-    let inCodeBlock = false;
-    let lines = markdown.split('\n');
+function markdownToHtml(markdown) {
+    let html = markdown
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
+        .replace(/^\*(.*)\*/gm, '<em>$1</em>')
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2">$1</a>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+        .replace(/\n\n/g, '<br><br>');
 
-    for (let line of lines) {
-        if (line.startsWith('```')) {
-            inCodeBlock = !inCodeBlock;
-            continue;
+    // Handle nested lists
+    let listLevel = 0;
+    html = html.replace(/^( *)- (.*$)/gm, (match, spaces, content) => {
+        const level = spaces.length / 2;
+        let result = '';
+
+        if (level > listLevel) {
+            result += '<ul>'.repeat(level - listLevel);
+        } else if (level < listLevel) {
+            result += '</ul>'.repeat(listLevel - level);
         }
 
-        if (inCodeBlock) {
-            rtf += '{\\f1 ' + line.replace(/[\\{}]/g, '\\$&') + '}\\par\n';
-        } else if (line.startsWith('# ')) {
-            rtf += '{\\f0\\fs36\\b ' + line.substring(2).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
-        } else if (line.startsWith('## ')) {
-            rtf += '{\\f0\\fs32\\b ' + line.substring(3).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
-        } else if (line.startsWith('### ')) {
-            rtf += '{\\f0\\fs28\\b ' + line.substring(4).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
-        } else if (line.startsWith('- ')) {
-            rtf += '{\\f0\\fs24 \u8226 ' + line.substring(2).replace(/[\\{}]/g, '\\$&') + '}\\par\n';
-        } else if (line === '') {
-            rtf += '\\par\n';
-        } else {
-            // Handle inline formatting
-            line = line.replace(/\*\*(.*?)\*\*/g, '{\\b $1}')  // Bold
-                .replace(/\*(.*?)\*/g, '{\\i $1}')      // Italic
-                .replace(/`(.*?)`/g, '{\\f1 $1}')       // Inline code
-                .replace(/\[(.*?)\]\((.*?)\)/g, '{\\field{\\*\\fldinst{HYPERLINK "$2"}}{\\fldrslt{\\ul $1}}}');  // Links
-            rtf += '{\\f0\\fs24 ' + line.replace(/[\\{}]/g, '\\$&') + '}\\par\n';
-        }
+        result += `<li>${content}</li>`;
+        listLevel = level;
+
+        return result;
+    });
+
+    // Close any remaining list tags
+    html += '</ul>'.repeat(listLevel);
+
+    return html;
+}
+
+function copyFormattedText(text) {
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = markdownToHtml(text);
+    tempElement.style.position = 'absolute';
+    tempElement.style.left = '-9999px';
+    document.body.appendChild(tempElement);
+
+    // Preserve line breaks and indentation in code blocks
+    const codeBlocks = tempElement.querySelectorAll('pre code');
+    codeBlocks.forEach(block => {
+        block.innerText = block.innerHTML;
+    });
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(tempElement);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    let success = false;
+    try {
+        success = document.execCommand('copy');
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
     }
 
-    rtf += '}';
-    return rtf;
+    document.body.removeChild(tempElement);
+    return success;
 }
 
 function formatSummary(summary) {
-    const rtfContent = markdownToRTF(summary);
+    const htmlContent = markdownToHtml(summary);
 
     let formattedContent = '<div class="summary-content">';
+    formattedContent += '<div class="copy-container">';
     formattedContent += '<button id="copySummaryBtn" class="copy-button">Copy Summary</button>';
-    formattedContent += `<pre>${escapeHtml(summary)}</pre>`;
+    formattedContent += '<span id="copyStatus" class="copy-status"></span>';
+    formattedContent += '</div>';
+    formattedContent += '<div class="summary-text">';
+    formattedContent += htmlContent;
+    formattedContent += '</div>';
     formattedContent += '</div>';
 
     setTimeout(() => {
         const copyButton = document.getElementById('copySummaryBtn');
+        const copyStatus = document.getElementById('copyStatus');
         if (copyButton) {
-            copyButton.addEventListener('click', function() {
-                if (navigator.clipboard && navigator.clipboard.write) {
-                    const blob = new Blob([rtfContent], {type: 'text/rtf'});
-                    const clipboardItem = new ClipboardItem({'text/rtf': blob});
-                    navigator.clipboard.write([clipboardItem]).then(function() {
-                        alert('Summary copied to clipboard in RTF format!');
-                    }, function(err) {
-                        console.error('Could not copy text: ', err);
-                        fallbackCopy(summary);
-                    });
+            copyButton.addEventListener('click', () => {
+                const success = copyFormattedText(summary);
+                if (success) {
+                    copyStatus.textContent = 'Copied!';
+                    copyStatus.style.opacity = '1';
+                    setTimeout(() => {
+                        copyStatus.style.opacity = '0';
+                    }, 2000);
                 } else {
-                    fallbackCopy(summary);
+                    copyStatus.textContent = 'Copy failed';
+                    copyStatus.style.opacity = '1';
+                    setTimeout(() => {
+                        copyStatus.style.opacity = '0';
+                    }, 2000);
                 }
             });
         }
@@ -385,32 +429,145 @@ function formatSummary(summary) {
     return formattedContent;
 }
 
-function fallbackCopy(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-        document.execCommand('copy');
-        alert('Summary copied to clipboard as plain text. Formatting may be lost.');
-    } catch (err) {
-        console.error('Fallback copy failed:', err);
-        alert('Failed to copy summary. Please try selecting and copying manually.');
+function addSettingsLink() {
+    const container = document.querySelector('.container');
+    if (!container) return;
+
+    const settingsContainer = document.createElement('div');
+    settingsContainer.className = 'settings-container';
+
+    const settingsLink = document.createElement('a');
+    settingsLink.href = 'settings.html';
+    settingsLink.textContent = 'Settings';
+    settingsLink.className = 'settings-link';
+
+    const settingsIndicator = document.createElement('span');
+    settingsIndicator.className = 'settings-indicator';
+
+    settingsContainer.appendChild(settingsLink);
+    settingsContainer.appendChild(settingsIndicator);
+    container.appendChild(settingsContainer);
+
+    // Check if settings are saved and update the indicator
+    const userSettings = JSON.parse(localStorage.getItem('userSettings')) || {};
+    if (userSettings.degree && userSettings.lectures && userSettings.lectures.length > 0) {
+        settingsIndicator.textContent = ' ✓';
+        settingsIndicator.title = 'Settings configured';
+        settingsIndicator.className = 'settings-indicator configured';
+    } else {
+        settingsIndicator.textContent = ' X';
+        settingsIndicator.title = 'Settings not configured';
+        settingsIndicator.className = 'settings-indicator not-configured';
     }
-    document.body.removeChild(textArea);
-}
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
 
-// Update the displaySummary function
-function displaySummary(summary) {
-    const summaryElement = document.getElementById('summary');
-    summaryElement.innerHTML = formatSummary(summary);
-    summaryElement.style.display = 'block';
+// CSS styles
+const styles = `
+    .summary-content {
+        position: relative;
+        border: 1px solid #ccc;
+        padding: 30px;
+        margin-top: 20px;
+        background-color: #f9f9f9;
+    }
+    .copy-container {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-bottom-left-radius: 5px;
+        z-index: 1;
+    }
+    .copy-button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    .copy-status {
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-right: 10px;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+    .summary-text {
+        margin-top: 40px;
+    }
+    .settings-container {
+        margin-top: 20px;
+        text-align: right;
+    }
+    .settings-link {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .settings-indicator {
+        margin-left: 5px;
+        font-weight: bold;
+    }
+    .settings-indicator.configured {
+        color: #4CAF50;
+    }
+    .settings-indicator.not-configured {
+        color: #f44336;
+    }
+`;
+
+// Append styles to the document head
+const styleElement = document.createElement('style');
+styleElement.textContent = styles;
+document.head.appendChild(styleElement);
+
+function updateUIForRecordingStart() {
+    document.getElementById('startRecording').disabled = true;
+    document.getElementById('stopRecording').disabled = false;
+    document.getElementById('pauseRecording').disabled = false;
+    document.getElementById('pauseRecording').textContent = 'Pause';
+    updateStatus('Recording...');
 }
+
+function updateUIForRecordingStop() {
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('stopRecording').disabled = true;
+    document.getElementById('pauseRecording').disabled = true;
+    updateStatus('Recording stopped. Processing final chunk...');
+}
+
+function updateStatus(message) {
+    document.getElementById('status').textContent = message;
+}
+
+async function fixStuckFiles() {
+    try {
+        const response = await fetch('php/fix_stuck_files.php', {
+            method: 'POST'
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert(result.message);
+        } else {
+            throw new Error(result.message || 'Failed to fix stuck files');
+        }
+    } catch (error) {
+        console.error('Error fixing stuck files:', error);
+        alert('Error fixing stuck files. Please try again.');
+    }
+}
+

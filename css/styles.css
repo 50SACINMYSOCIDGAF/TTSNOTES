@@ -101,6 +101,33 @@ button:disabled {
     overflow-y: auto;
 }
 
+select {
+    font-family: inherit;
+    font-size: 16px;
+    padding: 10px 15px;
+    border: 1px solid #bdc3c7;
+    border-radius: var(--border-radius);
+    background-color: white;
+    width: 100%;
+    margin-bottom: 10px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23000000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+#fixStuckFiles {
+    margin-top: 10px;
+    background-color: #e74c3c;
+    color: white;
+}
+
+#fixStuckFiles:hover {
+    background-color: #c0392b;
+}
+
 .past-summary {
     padding: 10px;
     margin: 10px 0;

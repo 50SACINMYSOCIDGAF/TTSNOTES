@@ -52,6 +52,12 @@ async function startRecording() {
         return;
     }
 
+    const userSettings = JSON.parse(localStorage.getItem('userSettings'));
+    if (!userSettings || !userSettings.degree || !userSettings.lectures || userSettings.lectures.length === 0) {
+        alert('Please configure your settings before starting a recording session');
+        return;
+    }
+
     isRecording = true;
     isPaused = false;
     chunkCounter = 0;
@@ -191,6 +197,7 @@ async function deleteOldestChunk() {
 
 async function summarizeTranscript() {
     const lectureName = document.getElementById('lectureSelect').value;
+    const userSettings = JSON.parse(localStorage.getItem('userSettings')) || {};
     updateStatus('Generating summary...');
     try {
         const response = await fetch('php/summarize.php', {
@@ -198,7 +205,10 @@ async function summarizeTranscript() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ lectureName: lectureName })
+            body: JSON.stringify({
+                lectureName: lectureName,
+                userSettings: userSettings
+            })
         });
         const result = await response.json();
         if (result.success) {

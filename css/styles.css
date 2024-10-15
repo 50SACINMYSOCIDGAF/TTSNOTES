@@ -301,6 +301,7 @@ p code, li code {
     justify-content: space-between;
     align-items: center;
     margin-top: 20px;
+    gap: 10px; /* Add gap between buttons */
 }
 
 .button-container button {
@@ -318,16 +319,33 @@ p code, li code {
     color: white;
 }
 
+.save-button:hover {
+    background-color: #2980b9;
+}
+
 .reset-button {
     background-color: #e74c3c;
     color: white;
 }
 
+.reset-button:hover {
+    background-color: #c0392b;
+}
+
+/* Remove the button separator */
 .button-separator {
-    width: 1px;
-    height: 30px;
-    background-color: #ccc;
-    margin: 0 10px;
+    display: none;
+}
+
+/* Ensure buttons take full width on mobile */
+@media (max-width: 600px) {
+    .button-container {
+        flex-direction: column;
+    }
+
+    .button-container button {
+        width: 100%;
+    }
 }
 
 /* Styles for the settings link on the main page */
